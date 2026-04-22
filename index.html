@@ -347,25 +347,13 @@
     }
 
     function findMetricValue(doc, label) {
-      const paragraphs = [...doc.querySelectorAll('p')];
-      const target = paragraphs.find((p) => p.textContent.trim() === label);
-      if (!target) return null;
-      const card = target.closest('div.rounded-lg, div');
-      const candidates = card ? [...card.querySelectorAll('p')] : [];
-      for (const p of candidates) {
-        const text = p.textContent.trim();
-        if (!text || text === label) continue;
+      const paragraphs = [...doc.querySelectorAll('p')].map((p) => p.textContent.trim()).filter(Boolean);
+      const idx = paragraphs.indexOf(label);
+      if (idx === -1) return null;
+      for (let i = idx + 1; i < Math.min(paragraphs.length, idx + 8); i += 1) {
+        const text = paragraphs[i];
         if (label.includes('TPS') && /tx\/s/i.test(text)) return text;
         if (label.includes('Fee') && text.includes('$')) return text;
-      }
-      const html = card ? card.innerHTML : target.parentElement.innerHTML;
-      if (label.includes('TPS')) {
-        const m = html.match(/<p[^>]*>([\d,.]+\s*tx\/s)<\/p>/i);
-        if (m) return m[1];
-      }
-      if (label.includes('Fee')) {
-        const m = html.match(/<p[^>]*>(\$[\d,.]+)<\/p>/i);
-        if (m) return m[1];
       }
       return null;
     }
