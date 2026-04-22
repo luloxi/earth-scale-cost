@@ -4,12 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Earth-Scale Cost per Transaction</title>
-  <meta name="description" content="A polished explainer and live ranking prototype for Earth-Scale Cost per Transaction across blockchain networks." />
+  <meta name="description" content="Live Earth-Scale Cost per Transaction ranking across 25 chains, refreshed clientside every 30 seconds." />
   <style>
     :root {
       --bg: #071018;
-      --panel: rgba(11, 22, 34, 0.74);
-      --panel-strong: rgba(11, 22, 34, 0.94);
+      --panel: rgba(11, 22, 34, 0.76);
       --line: rgba(138, 194, 255, 0.16);
       --text: #eef6ff;
       --muted: #9db1c6;
@@ -17,6 +16,7 @@
       --accent2: #8b5cf6;
       --good: #61f0b0;
       --warn: #ffd166;
+      --bad: #ff7c7c;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -31,7 +31,7 @@
       min-height: 100vh;
     }
     a { color: inherit; }
-    .wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    .wrap { width: min(1240px, calc(100% - 32px)); margin: 0 auto; }
     .nav {
       position: sticky; top: 0; z-index: 10;
       backdrop-filter: blur(16px);
@@ -56,8 +56,8 @@
       border-color: rgba(110,231,255,0.28);
     }
     .hero {
-      padding: 72px 0 34px;
-      display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 24px;
+      padding: 72px 0 24px;
+      display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px;
       align-items: stretch;
     }
     .card {
@@ -73,35 +73,26 @@
     }
     h1 {
       margin: 14px 0 18px;
-      font-size: clamp(42px, 8vw, 74px);
+      font-size: clamp(42px, 8vw, 72px);
       line-height: 0.95;
       letter-spacing: -0.04em;
     }
-    .lead {
-      font-size: 18px; line-height: 1.7; color: #d7e7f8; max-width: 62ch;
-    }
+    .lead { font-size: 18px; line-height: 1.7; color: #d7e7f8; max-width: 62ch; }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
-    .hero-side {
-      padding: 26px;
-      display: flex; flex-direction: column; justify-content: space-between;
-      background: linear-gradient(180deg, rgba(11,22,34,0.95), rgba(11,22,34,0.72));
-    }
-    .metric-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px;
-    }
-    .metric {
-      padding: 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.03);
-    }
+    .hero-side { padding: 26px; display: flex; flex-direction: column; justify-content: space-between; }
+    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+    .metric { padding: 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.03); }
     .metric label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
     .metric strong { font-size: 28px; display: block; }
-    .formula {
+    .formula, .note {
       margin-top: 18px; padding: 18px; border-radius: 20px; background: rgba(110,231,255,0.06); border: 1px solid rgba(110,231,255,0.14);
       color: #dff7ff; line-height: 1.65;
     }
+    .note { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
     section { padding: 18px 0; }
     .section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 18px; }
     .section-head h2 { margin: 0; font-size: 34px; letter-spacing: -0.03em; }
-    .section-head p { margin: 0; color: var(--muted); max-width: 60ch; line-height: 1.6; }
+    .section-head p { margin: 0; color: var(--muted); max-width: 70ch; line-height: 1.6; }
     .grid-2 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; }
     .panel { padding: 24px; }
     .panel h3 { margin: 0 0 16px; font-size: 22px; }
@@ -112,11 +103,17 @@
       width: 100%; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 16px;
       background: rgba(0,0,0,0.18); color: var(--text); font-size: 16px;
     }
-    .field small { color: var(--muted); line-height: 1.5; }
+    .field small, .muted { color: var(--muted); line-height: 1.5; }
+    .status-bar {
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:14px; color:var(--muted); font-size:14px;
+    }
+    .badge {
+      padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
+    }
     table {
       width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 18px; margin-top: 12px;
     }
-    th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
     th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
     tbody tr:hover { background: rgba(255,255,255,0.03); }
     .rank {
@@ -124,19 +121,18 @@
       background: rgba(110,231,255,0.10); color: var(--accent); font-weight: 700;
     }
     .score { font-weight: 700; }
-    .good { color: var(--good); }
+    .source { font-size: 12px; color: var(--muted); display:block; margin-top:4px; }
+    .small { font-size: 12px; color: var(--muted); }
+    .loading, .error { padding: 18px 0; }
+    .error { color: var(--bad); }
+    .foot { padding: 36px 0 64px; color: var(--muted); font-size: 14px; }
+    .ok { color: var(--good); }
     .warn { color: var(--warn); }
-    .muted { color: var(--muted); }
-    .foot {
-      padding: 36px 0 64px;
-      color: var(--muted); font-size: 14px;
-    }
-    .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
-    .pill { padding: 10px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); }
-    @media (max-width: 920px) {
+    @media (max-width: 980px) {
       .hero, .grid-2 { grid-template-columns: 1fr; }
       .metric-grid { grid-template-columns: 1fr; }
       .nav-inner, .section-head { align-items: flex-start; flex-direction: column; }
+      th:nth-child(6), td:nth-child(6), th:nth-child(7), td:nth-child(7) { display:none; }
     }
   </style>
 </head>
@@ -145,7 +141,7 @@
     <div class="wrap nav-inner">
       <div class="brand">
         <strong>Earth-Scale Cost per Transaction</strong>
-        <span>A ranking lens for real-world blockchain affordability</span>
+        <span>Live ranking. Clientside refresh every 30 seconds.</span>
       </div>
       <div class="nav-links">
         <a href="#ranking">Ranking</a>
@@ -158,17 +154,15 @@
   <main class="wrap">
     <section class="hero">
       <div class="card hero-copy">
-        <div class="eyebrow">New chain benchmark</div>
-        <h1>How expensive is a chain if everyone used it every day?</h1>
-        <p class="lead">Earth-Scale Cost per Transaction asks a simple question: if the whole planet used one chain for a fixed number of daily transactions per person, what would each transaction effectively cost on the actual technology that exists today?</p>
+        <div class="eyebrow">Live benchmark</div>
+        <h1>What would a transaction cost if the whole planet used this chain daily?</h1>
+        <p class="lead">This version is no longer placeholder-based. It uses live observable fee and throughput inputs, refreshes in the browser every 30 seconds, and ranks chains by a simple earth-scale penalty: current cost times the gap between target Earth demand and recently observed throughput.</p>
         <div class="hero-actions">
-          <a class="button primary" href="#ranking">See prototype ranking</a>
+          <a class="button primary" href="#ranking">See live ranking</a>
           <a class="button" href="#method">Read the formula</a>
         </div>
-        <div class="pill-row">
-          <div class="pill">World population assumption</div>
-          <div class="pill">Daily tx per user assumption</div>
-          <div class="pill">Implemented tech, not roadmap slides</div>
+        <div class="note">
+          This is a practical live metric, not a perfect final academic model. For most chains the live fee and TPS come from Chainspect pages fetched clientside through a public CORS proxy; XRP uses Blockchair and Unichain uses Blockscout.
         </div>
       </div>
       <aside class="card hero-side">
@@ -176,26 +170,30 @@
           <div class="eyebrow">At a glance</div>
           <div class="metric-grid">
             <div class="metric">
-              <label>Population</label>
+              <label>Population assumption</label>
               <strong id="populationStat">8.2B</strong>
             </div>
             <div class="metric">
               <label>Daily tx / user</label>
-              <strong id="dailyTxStat">10</strong>
+              <strong id="dailyTxStat">1</strong>
             </div>
             <div class="metric">
               <label>Required tx / day</label>
-              <strong id="requiredTxDay">82.0B</strong>
+              <strong id="requiredTxDay">8.2B</strong>
             </div>
             <div class="metric">
               <label>Required TPS</label>
-              <strong id="requiredTps">949,074</strong>
+              <strong id="requiredTps">94,907</strong>
             </div>
           </div>
         </div>
         <div class="formula">
-          Earth-Scale Cost per Tx = daily network operating cost ÷ sustainable daily transactions at Earth-scale demand.<br/><br/>
-          In practice, this prototype uses current cost-per-transaction inputs plus a throughput stress factor based on the required global TPS.
+          Earth-Scale Cost per Tx = live fee × max(1, required TPS ÷ live TPS)
+        </div>
+        <div class="status-bar">
+          <span class="badge" id="refreshStatus">Waiting for first live fetch…</span>
+          <span class="badge" id="lastUpdated">Last updated: —</span>
+          <span class="badge" id="chainCoverage">Coverage: —</span>
         </div>
       </aside>
     </section>
@@ -203,10 +201,11 @@
     <section id="ranking">
       <div class="section-head">
         <div>
-          <h2>Prototype ranking</h2>
-          <p>Adjust the assumptions and compare chains through a single global-adoption lens. Lower is better.</p>
+          <h2>Live top 25</h2>
+          <p>The ranking below is computed in your browser from live chain data and auto-refreshes every 30 seconds. Lower Earth-Scale Cost is better.</p>
         </div>
       </div>
+
       <div class="grid-2">
         <div class="card panel">
           <h3>Assumptions</h3>
@@ -214,39 +213,36 @@
             <div class="field">
               <label for="population">Earth population</label>
               <input id="population" type="number" min="1" step="1000000" value="8200000000" />
-              <small>Total people assumed to be active participants in the chain economy.</small>
+              <small>This is the demand assumption. The default is 8.2 billion people.</small>
             </div>
             <div class="field">
               <label for="dailyTx">Daily transactions per user</label>
-              <input id="dailyTx" type="number" min="0.1" step="0.1" value="10" />
-              <small>Includes payments, swaps, app interactions, gaming actions, and social actions.</small>
+              <input id="dailyTx" type="number" min="0.1" step="0.1" value="1" />
+              <small>Default is 1 tx per person per day. Increase it to test more aggressive mass-adoption scenarios.</small>
             </div>
           </div>
         </div>
         <div class="card panel">
-          <h3>Interpretation</h3>
-          <p class="muted">This is not just raw fee data. It is a capacity-aware affordability view. A chain with ultra-low fees but weak sustainable throughput should rank worse once you force it into global-scale conditions.</p>
-          <table>
-            <tbody>
-              <tr><th>Signal</th><th>Meaning</th></tr>
-              <tr><td class="good">Low score</td><td>More plausible for mass daily usage</td></tr>
-              <tr><td class="warn">High score</td><td>Either too expensive, too capacity-constrained, or both</td></tr>
-            </tbody>
-          </table>
+          <h3>Live metric definition</h3>
+          <p class="muted">Required TPS = population × daily tx per user ÷ 86,400</p>
+          <p class="muted">Earth-Scale multiplier = max(1, required TPS ÷ live TPS)</p>
+          <p class="muted">Earth-Scale Cost per Tx = live average fee × Earth-Scale multiplier</p>
+          <p class="muted">This keeps the whole ranking observable and updatable clientside with no placeholders.</p>
         </div>
       </div>
 
       <div class="card panel" style="margin-top:24px;">
-        <p class="muted" style="margin-top:0;">Current ranking inputs are illustrative placeholders for UX prototyping, not a finalized research dataset. Next step is replacing them with sourced fee and sustainable-throughput inputs per chain.</p>
+        <div id="tableState" class="loading muted">Loading live chain data…</div>
         <table>
           <thead>
             <tr>
               <th>Rank</th>
               <th>Chain</th>
-              <th>Current Cost / Tx</th>
-              <th>Sustainable TPS</th>
-              <th>Stress Factor</th>
+              <th>Live Fee / Tx</th>
+              <th>Live TPS</th>
+              <th>Earth Multiplier</th>
               <th>Earth-Scale Cost / Tx</th>
+              <th>Source</th>
             </tr>
           </thead>
           <tbody id="rankingBody"></tbody>
@@ -257,60 +253,59 @@
     <section id="method">
       <div class="section-head">
         <div>
-          <h2>Method</h2>
-          <p>A clean baseline formula you can evolve into a serious public ranking.</p>
+          <h2>Method and sources</h2>
+          <p>This page intentionally favors live observability over theoretical promises. If a number cannot be refreshed in the browser, it does not belong in the ranking.</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="card panel">
-          <h3>Baseline formula</h3>
-          <p class="muted">Required TPS = (population × daily transactions per user) ÷ 86,400</p>
-          <p class="muted">Stress Factor = max(1, required TPS ÷ sustainable TPS)</p>
-          <p class="muted">Earth-Scale Cost per Tx = current cost per tx × Stress Factor</p>
-          <p class="muted">You can later replace the stress factor with a better fee elasticity model, DA cost curve, sequencer cost model, or hardware/decentralization penalty.</p>
+          <h3>How the live inputs work</h3>
+          <p class="muted">Most chains here use live TPS and average fee data from their Chainspect chain pages, fetched through api.codetabs.com so the browser can read them cross-origin.</p>
+          <p class="muted">XRP Ledger is currently sourced from Blockchair live stats. Unichain is currently sourced from Blockscout live stats.</p>
+          <p class="muted">The page refreshes every 30 seconds and reranks immediately when new values arrive or when you change the demand assumptions.</p>
         </div>
         <div class="card panel">
-          <h3>Why this is useful</h3>
-          <p class="muted">Most chain comparisons fail because they compare today’s idle fees, not world-scale demand. This metric forces every network to answer the same question under the same adoption assumption.</p>
-          <p class="muted">That makes it useful for rankings, ecosystem narratives, investor decks, and protocol design debates.</p>
+          <h3>Caveats</h3>
+          <p class="muted">This is a live practical benchmark, not a full cost-model simulation. Real capacity under extreme demand can differ from current observed TPS, and fee formation differs across architectures.</p>
+          <p class="muted">Still, it is already much more honest than static placeholder leaderboards because every row is tied to live, inspectable data.</p>
         </div>
       </div>
     </section>
 
-    <div class="foot">
-      Earth-Scale Cost per Transaction — prototype site and naming concept. Data shown here is illustrative placeholder data for the ranking UX.
-    </div>
+    <div class="foot">Earth-Scale Cost per Transaction — live clientside prototype. Refresh interval: 30 seconds.</div>
   </main>
 
   <script>
-    const chains = [
-      { name: 'Solana', currentCost: 0.00025, tps: 3000 },
-      { name: 'Sui', currentCost: 0.0008, tps: 800 },
-      { name: 'Aptos', currentCost: 0.0012, tps: 1000 },
-      { name: 'Algorand', currentCost: 0.0010, tps: 1000 },
-      { name: 'XRP Ledger', currentCost: 0.0002, tps: 1500 },
-      { name: 'Stellar', currentCost: 0.00012, tps: 1000 },
-      { name: 'Tron', currentCost: 0.0015, tps: 1000 },
-      { name: 'Ton', currentCost: 0.0018, tps: 700 },
-      { name: 'Near', currentCost: 0.0025, tps: 600 },
-      { name: 'Avalanche C-Chain', currentCost: 0.01, tps: 200 },
-      { name: 'Polygon PoS', currentCost: 0.003, tps: 250 },
-      { name: 'BNB Chain', currentCost: 0.004, tps: 220 },
-      { name: 'Base', currentCost: 0.0045, tps: 150 },
-      { name: 'Optimism', currentCost: 0.006, tps: 140 },
-      { name: 'Arbitrum One', currentCost: 0.008, tps: 120 },
-      { name: 'Sei', currentCost: 0.0011, tps: 500 },
-      { name: 'Injective', currentCost: 0.0020, tps: 400 },
-      { name: 'Hedera', currentCost: 0.0005, tps: 650 },
-      { name: 'Internet Computer', currentCost: 0.0035, tps: 300 },
-      { name: 'Cardano', currentCost: 0.17, tps: 40 },
-      { name: 'Tezos', currentCost: 0.01, tps: 120 },
-      { name: 'Cosmos Hub', currentCost: 0.02, tps: 100 },
-      { name: 'Polkadot', currentCost: 0.03, tps: 100 },
-      { name: 'Ethereum L1', currentCost: 0.62, tps: 15 },
-      { name: 'Bitcoin', currentCost: 1.50, tps: 7 }
+    const CHAIN_CONFIG = [
+      { slug: 'bitcoin', name: 'Bitcoin', source: 'Chainspect' },
+      { slug: 'ethereum', name: 'Ethereum', source: 'Chainspect' },
+      { slug: 'solana', name: 'Solana', source: 'Chainspect' },
+      { slug: 'arbitrum', name: 'Arbitrum', source: 'Chainspect' },
+      { slug: 'base', name: 'Base', source: 'Chainspect' },
+      { slug: 'optimism', name: 'Optimism', source: 'Chainspect' },
+      { slug: 'polygon', name: 'Polygon', source: 'Chainspect' },
+      { slug: 'bnb-chain', name: 'BNB Chain', source: 'Chainspect' },
+      { slug: 'cardano', name: 'Cardano', source: 'Chainspect' },
+      { slug: 'algorand', name: 'Algorand', source: 'Chainspect' },
+      { slug: 'avalanche', name: 'Avalanche', source: 'Chainspect' },
+      { slug: 'aptos', name: 'Aptos', source: 'Chainspect' },
+      { slug: 'sui', name: 'Sui', source: 'Chainspect' },
+      { slug: 'tron', name: 'TRON', source: 'Chainspect' },
+      { slug: 'stellar', name: 'Stellar', source: 'Chainspect' },
+      { slug: 'near', name: 'NEAR', source: 'Chainspect' },
+      { slug: 'ton', name: 'TON', source: 'Chainspect' },
+      { slug: 'hedera', name: 'Hedera', source: 'Chainspect' },
+      { slug: 'polkadot', name: 'Polkadot', source: 'Chainspect' },
+      { slug: 'tezos', name: 'Tezos', source: 'Chainspect' },
+      { slug: 'sei', name: 'Sei', source: 'Chainspect' },
+      { slug: 'sonic', name: 'Sonic', source: 'Chainspect' },
+      { slug: 'icp', name: 'ICP', source: 'Chainspect' },
+      { slug: 'xrp', name: 'XRP Ledger', source: 'Blockchair' },
+      { slug: 'unichain', name: 'Unichain', source: 'Blockscout' }
     ];
 
+    const PROXY = 'https://api.codetabs.com/v1/proxy/?quest=';
+    const REFRESH_MS = 30000;
     const fmtCompact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
     const fmtInt = new Intl.NumberFormat('en-US');
     const fmtUsd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6 });
@@ -318,42 +313,207 @@
     const populationInput = document.getElementById('population');
     const dailyTxInput = document.getElementById('dailyTx');
     const rankingBody = document.getElementById('rankingBody');
+    const tableState = document.getElementById('tableState');
+    const refreshStatus = document.getElementById('refreshStatus');
+    const lastUpdatedEl = document.getElementById('lastUpdated');
+    const chainCoverageEl = document.getElementById('chainCoverage');
 
-    function calculate() {
+    let liveRows = [];
+    let refreshTimer = null;
+    let countdownTimer = null;
+    let nextRefreshAt = 0;
+
+    function updateAssumptionStats() {
       const population = Number(populationInput.value || 0);
       const dailyTx = Number(dailyTxInput.value || 0);
       const requiredDailyTx = population * dailyTx;
       const requiredTps = requiredDailyTx / 86400;
-
       document.getElementById('populationStat').textContent = fmtCompact.format(population);
       document.getElementById('dailyTxStat').textContent = dailyTx.toString();
       document.getElementById('requiredTxDay').textContent = fmtCompact.format(requiredDailyTx);
       document.getElementById('requiredTps').textContent = fmtInt.format(Math.round(requiredTps));
+      renderRanking();
+    }
 
-      const ranked = chains.map(chain => {
-        const stress = Math.max(1, requiredTps / chain.tps);
-        return {
-          ...chain,
-          stress,
-          earthScaleCost: chain.currentCost * stress
-        };
-      }).sort((a, b) => a.earthScaleCost - b.earthScaleCost);
+    function parseNumber(text) {
+      const normalized = (text || '')
+        .replace(/,/g, '')
+        .replace(/\$/g, '')
+        .replace(/tx\/s/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const m = normalized.match(/-?\d+(?:\.\d+)?/);
+      return m ? Number(m[0]) : null;
+    }
 
-      rankingBody.innerHTML = ranked.map((chain, index) => `
+    function findMetricValue(doc, label) {
+      const paragraphs = [...doc.querySelectorAll('p')];
+      const target = paragraphs.find((p) => p.textContent.trim() === label);
+      if (!target) return null;
+      const card = target.closest('div.rounded-lg, div');
+      const candidates = card ? [...card.querySelectorAll('p')] : [];
+      for (const p of candidates) {
+        const text = p.textContent.trim();
+        if (!text || text === label) continue;
+        if (label.includes('TPS') && /tx\/s/i.test(text)) return text;
+        if (label.includes('Fee') && text.includes('$')) return text;
+      }
+      const html = card ? card.innerHTML : target.parentElement.innerHTML;
+      if (label.includes('TPS')) {
+        const m = html.match(/<p[^>]*>([\d,.]+\s*tx\/s)<\/p>/i);
+        if (m) return m[1];
+      }
+      if (label.includes('Fee')) {
+        const m = html.match(/<p[^>]*>(\$[\d,.]+)<\/p>/i);
+        if (m) return m[1];
+      }
+      return null;
+    }
+
+    async function fetchChainspectChain(chain) {
+      const url = `${PROXY}${encodeURIComponent(`https://chainspect.app/chain/${chain.slug}`)}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const tpsText = findMetricValue(doc, 'Real-time TPS (1H)');
+      const feeText = findMetricValue(doc, 'Average Tx Fee');
+      const tps = parseNumber(tpsText);
+      const fee = parseNumber(feeText);
+      if (!(tps >= 0) || !(fee >= 0)) throw new Error('Missing metric');
+      return {
+        ...chain,
+        liveTps: tps,
+        liveFeeUsd: fee,
+        sourceLabel: 'Chainspect via Codetabs proxy',
+        sourceUrl: `https://chainspect.app/chain/${chain.slug}`,
+        metricTimestamp: new Date().toISOString()
+      };
+    }
+
+    async function fetchXrpBlockchair(chain) {
+      const res = await fetch('https://api.blockchair.com/ripple/stats', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const data = json.data || {};
+      const tx24 = Number(data.transactions_24h);
+      const fee = Number(data.average_transaction_fee_24h);
+      if (!(tx24 >= 0) || !(fee >= 0)) throw new Error('Missing metric');
+      return {
+        ...chain,
+        liveTps: tx24 / 86400,
+        liveFeeUsd: fee,
+        sourceLabel: 'Blockchair stats',
+        sourceUrl: 'https://api.blockchair.com/ripple/stats',
+        metricTimestamp: new Date().toISOString()
+      };
+    }
+
+    async function fetchUnichainBlockscout(chain) {
+      const res = await fetch('https://unichain.blockscout.com/api/v2/stats', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const avgGasGwei = Number(data?.gas_prices?.average);
+      const ethUsd = Number(data?.coin_price);
+      const txToday = Number(data?.transactions_today);
+      const now = new Date();
+      const utcMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+      const secondsElapsed = Math.max(1, (Date.now() - utcMidnight) / 1000);
+      const liveTps = txToday / secondsElapsed;
+      const liveFeeUsd = (avgGasGwei * 1e-9) * 21000 * ethUsd;
+      if (!(liveTps >= 0) || !(liveFeeUsd >= 0)) throw new Error('Missing metric');
+      return {
+        ...chain,
+        liveTps,
+        liveFeeUsd,
+        sourceLabel: 'Blockscout stats',
+        sourceUrl: 'https://unichain.blockscout.com/api/v2/stats',
+        metricTimestamp: new Date().toISOString()
+      };
+    }
+
+    async function fetchChain(chain) {
+      if (chain.source === 'Blockchair') return fetchXrpBlockchair(chain);
+      if (chain.source === 'Blockscout') return fetchUnichainBlockscout(chain);
+      return fetchChainspectChain(chain);
+    }
+
+    async function loadAllChains() {
+      refreshStatus.textContent = 'Refreshing live data…';
+      const results = [];
+      const errors = [];
+      for (const chain of CHAIN_CONFIG) {
+        try {
+          const row = await fetchChain(chain);
+          results.push(row);
+        } catch (error) {
+          errors.push(`${chain.name}: ${error.message}`);
+        }
+      }
+      liveRows = results;
+      const ok = results.length;
+      const total = CHAIN_CONFIG.length;
+      chainCoverageEl.textContent = `Coverage: ${ok}/${total} chains live`;
+      lastUpdatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'America/Argentina/Buenos_Aires' })} ART`;
+      tableState.className = ok ? 'loading muted' : 'error';
+      tableState.textContent = ok
+        ? (errors.length ? `Loaded ${ok} chains. ${errors.length} failed this cycle.` : `Loaded ${ok} chains successfully.`)
+        : 'Live fetch failed for every chain this cycle.';
+      renderRanking();
+      nextRefreshAt = Date.now() + REFRESH_MS;
+      startCountdown();
+    }
+
+    function renderRanking() {
+      const population = Number(populationInput.value || 0);
+      const dailyTx = Number(dailyTxInput.value || 0);
+      const requiredTps = (population * dailyTx) / 86400;
+      const ranked = liveRows
+        .filter((row) => row.liveFeeUsd >= 0 && row.liveTps >= 0)
+        .map((row) => {
+          const multiplier = Math.max(1, requiredTps / Math.max(row.liveTps, 0.000001));
+          return {
+            ...row,
+            multiplier,
+            earthScaleCost: row.liveFeeUsd * multiplier
+          };
+        })
+        .sort((a, b) => a.earthScaleCost - b.earthScaleCost);
+
+      rankingBody.innerHTML = ranked.map((row, index) => `
         <tr>
           <td><span class="rank">${index + 1}</span></td>
-          <td>${chain.name}</td>
-          <td>${fmtUsd.format(chain.currentCost)}</td>
-          <td>${fmtInt.format(chain.tps)}</td>
-          <td>${chain.stress < 10 ? chain.stress.toFixed(2) + '×' : fmtInt.format(Math.round(chain.stress)) + '×'}</td>
-          <td class="score">${fmtUsd.format(chain.earthScaleCost)}</td>
+          <td>
+            <strong>${row.name}</strong>
+            <span class="source">${row.source}</span>
+          </td>
+          <td>${fmtUsd.format(row.liveFeeUsd)}</td>
+          <td>${row.liveTps < 1000 ? row.liveTps.toFixed(2) : fmtInt.format(Math.round(row.liveTps))}</td>
+          <td>${row.multiplier < 10 ? row.multiplier.toFixed(2) + '×' : fmtInt.format(Math.round(row.multiplier)) + '×'}</td>
+          <td class="score">${fmtUsd.format(row.earthScaleCost)}</td>
+          <td><a class="small" href="${row.sourceUrl}" target="_blank" rel="noreferrer">${row.sourceLabel}</a></td>
         </tr>
       `).join('');
     }
 
-    populationInput.addEventListener('input', calculate);
-    dailyTxInput.addEventListener('input', calculate);
-    calculate();
+    function startCountdown() {
+      if (countdownTimer) clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        const seconds = Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000));
+        refreshStatus.textContent = seconds > 0 ? `Next refresh in ${seconds}s` : 'Refreshing live data…';
+      }, 500);
+    }
+
+    async function refreshLoop() {
+      await loadAllChains();
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(refreshLoop, REFRESH_MS);
+    }
+
+    populationInput.addEventListener('input', updateAssumptionStats);
+    dailyTxInput.addEventListener('input', updateAssumptionStats);
+    updateAssumptionStats();
+    refreshLoop();
   </script>
 </body>
 </html>
