@@ -54,9 +54,15 @@
     .brand-copy strong { display:block; font-size:14px; letter-spacing:.08em; text-transform:uppercase; }
     .brand-copy span { color: var(--muted); font-size: 13px; }
     .nav-links { display:flex; flex-wrap:wrap; gap:10px; }
+    .nav-actions { display:flex; align-items:center; gap:10px; }
+    .burger {
+      display:none; width:46px; height:46px; border-radius:14px; border:1px solid var(--line);
+      background: rgba(255,255,255,.04); color: var(--text); align-items:center; justify-content:center;
+      font-size:20px; cursor:pointer;
+    }
     .pill {
       border: 1px solid var(--line); background: rgba(255,255,255,.03);
-      border-radius: 999px; padding: 10px 14px; font-size: 14px;
+      border-radius: 999px; padding: 12px 16px; font-size: 14px;
     }
     .pill.primary {
       background: linear-gradient(135deg, rgba(94,227,255,.18), rgba(139,124,255,.16));
@@ -77,6 +83,13 @@
       align-items: stretch;
     }
     .hero-card { padding: 30px; }
+    .mobile-hero-head {
+      display:none; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px;
+    }
+    .mobile-hero-links {
+      display:none; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; margin-top:16px;
+    }
+    .mobile-hero-links a { text-align:center; font-weight:600; }
     .eyebrow {
       color: var(--accent); text-transform: uppercase; letter-spacing: .16em; font-size: 12px; font-weight: 700;
     }
@@ -135,9 +148,9 @@
       background: linear-gradient(135deg, rgba(94,227,255,.18), rgba(139,124,255,.16)); font-weight: 700; font-size:12px;
       border:1px solid rgba(255,255,255,.08);
     }
-    .chain-meta strong { display:block; }
+    .chain-meta strong { display:block; font-size:15px; }
     .chain-meta span { color:var(--muted); font-size:12px; }
-    .value { font-weight:700; }
+    .value { font-weight:700; font-size:15px; }
     .muted { color:var(--muted); }
     .good { color: var(--green); }
     .bad { color: var(--red); }
@@ -167,6 +180,41 @@
       .hero-grid, .detail-grid, .toolbar, .top3 { grid-template-columns: 1fr; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
     }
+    @media (max-width: 760px) {
+      .wrap { width: min(100%, calc(100% - 18px)); }
+      .nav-inner { padding: 10px 0; align-items:center; }
+      .brand-mark { width: 34px; height: 34px; border-radius: 12px; }
+      .brand-copy strong { font-size: 13px; }
+      .brand-copy span { font-size: 12px; line-height: 1.35; }
+      .nav-links {
+        position: absolute; left: 10px; right: 10px; top: calc(100% + 8px);
+        display:none; flex-direction:column; padding: 12px; border-radius: 18px;
+        background: rgba(12, 18, 31, .98); border: 1px solid var(--line); box-shadow: var(--shadow);
+      }
+      .nav-links.open { display:flex; }
+      .nav-links .pill { width: 100%; text-align:center; padding: 14px 16px; font-size: 15px; }
+      .burger { display:inline-flex; }
+      .hero-card { padding: 20px; border-radius: 22px; }
+      .mobile-hero-head { display:flex; }
+      .mobile-hero-links { display:grid; }
+      h1 { font-size: clamp(32px, 10vw, 44px); }
+      .lead { font-size: 16px; }
+      .hero-actions { display:none; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .section-head h2 { font-size: 28px; }
+      .top3 { grid-template-columns: 1fr; }
+      table { min-width: 860px; }
+      th { font-size: 13px; }
+      td { font-size: 16px; padding: 16px 10px; }
+      .rank-badge { width: 34px; height: 34px; font-size: 15px; }
+      .logo, .logo-fallback { width: 38px; height: 38px; }
+      .chain-meta strong { font-size: 16px; }
+      .chain-meta span { font-size: 13px; }
+      .value { font-size: 16px; }
+      .toolbar-box label, .mini-card label, .stat-box label { font-size: 13px; }
+      .toolbar-box strong, .mini-card strong, .stat-box strong { font-size: 22px; }
+      .rank-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 18px; }
+    }
   </style>
 </head>
 <body>
@@ -179,11 +227,14 @@
           <span>Mass-adoption ranking for blockchain affordability</span>
         </div>
       </div>
-      <div class="nav-links">
-        <a class="pill" href="#ranking">Ranking</a>
-        <a class="pill" href="#chain-detail">Chain page</a>
-        <a class="pill" href="#methodology">Methodology</a>
-        <a class="pill primary" href="https://github.com/luloxi/earth-scale-cost" target="_blank" rel="noreferrer">GitHub ↗</a>
+      <div class="nav-actions">
+        <div class="nav-links" id="navLinks">
+          <a class="pill" href="#ranking">Ranking</a>
+          <a class="pill" href="#chain-detail">Chain page</a>
+          <a class="pill" href="#methodology">Methodology</a>
+          <a class="pill primary" href="https://github.com/luloxi/earth-scale-cost" target="_blank" rel="noreferrer">GitHub ↗</a>
+        </div>
+        <button class="burger" id="burgerBtn" aria-label="Open menu">☰</button>
       </div>
     </div>
   </nav>
@@ -191,12 +242,22 @@
   <main class="wrap page">
     <section class="hero-grid">
       <div class="hero-card">
+        <div class="mobile-hero-head">
+          <div><div class="eyebrow">Landing page</div></div>
+          <a class="pill primary" href="#ranking">Top ranking</a>
+        </div>
         <div class="eyebrow">Ranking first</div>
         <h1>CoinGecko-style ranking for what a chain would cost at Earth scale.</h1>
         <p class="lead">This landing page now shows the ranking first, paints instantly with a built-in snapshot, and then refreshes clientside every 30 seconds with live chain data. Click any row to open its chain page section below.</p>
         <div class="hero-actions">
           <a class="pill primary" href="#ranking">Open ranking</a>
           <a class="pill" href="#chain-detail">Open selected chain page</a>
+        </div>
+        <div class="mobile-hero-links">
+          <a class="pill primary" href="#ranking">Ranking</a>
+          <a class="pill" href="#chain-detail">Chain page</a>
+          <a class="pill" href="#methodology">Methodology</a>
+          <a class="pill" href="https://github.com/luloxi/earth-scale-cost" target="_blank" rel="noreferrer">GitHub ↗</a>
         </div>
         <div class="chips" style="margin-top:16px;">
           <span class="pill">Instant first paint</span>
@@ -590,6 +651,11 @@
       clearTimeout(refreshTimer);
       refreshTimer = setTimeout(refreshLive, REFRESH_MS);
     }
+
+    const navLinks = document.getElementById('navLinks');
+    const burgerBtn = document.getElementById('burgerBtn');
+    burgerBtn.addEventListener('click', () => navLinks.classList.toggle('open'));
+    navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
 
     populationInput.addEventListener('input', renderTable);
     dailyTxInput.addEventListener('input', renderTable);
