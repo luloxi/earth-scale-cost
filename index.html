@@ -306,6 +306,8 @@
 
     const PROXY = 'https://api.codetabs.com/v1/proxy/?quest=';
     const REFRESH_MS = 30000;
+    const FETCH_TIMEOUT_MS = 12000;
+    const FETCH_CONCURRENCY = 6;
     const fmtCompact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
     const fmtInt = new Intl.NumberFormat('en-US');
     const fmtUsd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 6 });
@@ -346,26 +348,30 @@
       return m ? Number(m[0]) : null;
     }
 
-    function findMetricValue(doc, label) {
-      const paragraphs = [...doc.querySelectorAll('p')].map((p) => p.textContent.trim()).filter(Boolean);
-      const idx = paragraphs.indexOf(label);
-      if (idx === -1) return null;
-      for (let i = idx + 1; i < Math.min(paragraphs.length, idx + 8); i += 1) {
-        const text = paragraphs[i];
-        if (label.includes('TPS') && /tx\/s/i.test(text)) return text;
-        if (label.includes('Fee') && text.includes('$')) return text;
+    async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } finally {
+        clearTimeout(timeout);
       }
-      return null;
+    }
+
+    function extractChainspectMetric(html, label, valuePattern) {
+      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`${escaped}</p>[\\s\\S]{0,2000}?<p[^>]*>(${valuePattern})<\\/p>`, 'i');
+      const match = html.match(regex);
+      return match ? match[1] : null;
     }
 
     async function fetchChainspectChain(chain) {
       const url = `${PROXY}${encodeURIComponent(`https://chainspect.app/chain/${chain.slug}`)}`;
-      const res = await fetch(url, { cache: 'no-store' });
+      const res = await fetchWithTimeout(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const html = await res.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const tpsText = findMetricValue(doc, 'Real-time TPS (1H)');
-      const feeText = findMetricValue(doc, 'Average Tx Fee');
+      const tpsText = extractChainspectMetric(html, 'Real-time TPS (1H)', '[\\d,.]+\\s*tx\\/s');
+      const feeText = extractChainspectMetric(html, 'Average Tx Fee', '\\$[\\d,.]+');
       const tps = parseNumber(tpsText);
       const fee = parseNumber(feeText);
       if (!(tps >= 0) || !(fee >= 0)) throw new Error('Missing metric');
@@ -380,7 +386,7 @@
     }
 
     async function fetchXrpBlockchair(chain) {
-      const res = await fetch('https://api.blockchair.com/ripple/stats', { cache: 'no-store' });
+      const res = await fetchWithTimeout('https://api.blockchair.com/ripple/stats', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const data = json.data || {};
@@ -398,7 +404,7 @@
     }
 
     async function fetchUnichainBlockscout(chain) {
-      const res = await fetch('https://unichain.blockscout.com/api/v2/stats', { cache: 'no-store' });
+      const res = await fetchWithTimeout('https://unichain.blockscout.com/api/v2/stats', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const avgGasGwei = Number(data?.gas_prices?.average);
@@ -426,27 +432,49 @@
       return fetchChainspectChain(chain);
     }
 
+    async function runPool(items, worker, concurrency) {
+      const queue = [...items];
+      const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+        while (queue.length) {
+          const item = queue.shift();
+          await worker(item);
+        }
+      });
+      await Promise.all(workers);
+    }
+
     async function loadAllChains() {
       refreshStatus.textContent = 'Refreshing live data…';
+      liveRows = [];
+      renderRanking();
       const results = [];
       const errors = [];
-      for (const chain of CHAIN_CONFIG) {
+      const total = CHAIN_CONFIG.length;
+      chainCoverageEl.textContent = `Coverage: 0/${total} chains live`;
+      tableState.className = 'loading muted';
+      tableState.textContent = 'Loading live chain data…';
+
+      await runPool(CHAIN_CONFIG, async (chain) => {
         try {
           const row = await fetchChain(chain);
           results.push(row);
+          liveRows = [...results];
+          chainCoverageEl.textContent = `Coverage: ${results.length}/${total} chains live`;
+          tableState.textContent = `Loading live chain data… ${results.length}/${total}`;
+          renderRanking();
         } catch (error) {
           errors.push(`${chain.name}: ${error.message}`);
         }
-      }
+      }, FETCH_CONCURRENCY);
+
       liveRows = results;
       const ok = results.length;
-      const total = CHAIN_CONFIG.length;
-      chainCoverageEl.textContent = `Coverage: ${ok}/${total} chains live`;
       lastUpdatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'America/Argentina/Buenos_Aires' })} ART`;
       tableState.className = ok ? 'loading muted' : 'error';
       tableState.textContent = ok
         ? (errors.length ? `Loaded ${ok} chains. ${errors.length} failed this cycle.` : `Loaded ${ok} chains successfully.`)
         : 'Live fetch failed for every chain this cycle.';
+      window.__earthScaleErrors = errors;
       renderRanking();
       nextRefreshAt = Date.now() + REFRESH_MS;
       startCountdown();
