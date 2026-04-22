@@ -237,6 +237,7 @@
       </div>
 
       <div class="card panel" style="margin-top:24px;">
+        <p class="muted" style="margin-top:0;">Current ranking inputs are illustrative placeholders for UX prototyping, not a finalized research dataset. Next step is replacing them with sourced fee and sustainable-throughput inputs per chain.</p>
         <table>
           <thead>
             <tr>
@@ -284,11 +285,30 @@
   <script>
     const chains = [
       { name: 'Solana', currentCost: 0.00025, tps: 3000 },
-      { name: 'Base', currentCost: 0.0045, tps: 150 },
-      { name: 'Arbitrum One', currentCost: 0.008, tps: 120 },
-      { name: 'Ethereum L1', currentCost: 0.62, tps: 15 },
       { name: 'Sui', currentCost: 0.0008, tps: 800 },
-      { name: 'Aptos', currentCost: 0.0012, tps: 1000 }
+      { name: 'Aptos', currentCost: 0.0012, tps: 1000 },
+      { name: 'Algorand', currentCost: 0.0010, tps: 1000 },
+      { name: 'XRP Ledger', currentCost: 0.0002, tps: 1500 },
+      { name: 'Stellar', currentCost: 0.00012, tps: 1000 },
+      { name: 'Tron', currentCost: 0.0015, tps: 1000 },
+      { name: 'Ton', currentCost: 0.0018, tps: 700 },
+      { name: 'Near', currentCost: 0.0025, tps: 600 },
+      { name: 'Avalanche C-Chain', currentCost: 0.01, tps: 200 },
+      { name: 'Polygon PoS', currentCost: 0.003, tps: 250 },
+      { name: 'BNB Chain', currentCost: 0.004, tps: 220 },
+      { name: 'Base', currentCost: 0.0045, tps: 150 },
+      { name: 'Optimism', currentCost: 0.006, tps: 140 },
+      { name: 'Arbitrum One', currentCost: 0.008, tps: 120 },
+      { name: 'Sei', currentCost: 0.0011, tps: 500 },
+      { name: 'Injective', currentCost: 0.0020, tps: 400 },
+      { name: 'Hedera', currentCost: 0.0005, tps: 650 },
+      { name: 'Internet Computer', currentCost: 0.0035, tps: 300 },
+      { name: 'Cardano', currentCost: 0.17, tps: 40 },
+      { name: 'Tezos', currentCost: 0.01, tps: 120 },
+      { name: 'Cosmos Hub', currentCost: 0.02, tps: 100 },
+      { name: 'Polkadot', currentCost: 0.03, tps: 100 },
+      { name: 'Ethereum L1', currentCost: 0.62, tps: 15 },
+      { name: 'Bitcoin', currentCost: 1.50, tps: 7 }
     ];
 
     const fmtCompact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
